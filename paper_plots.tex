@@ -1,0 +1,28 @@
+% TeX file to generate paper plots after the experiments have been run.
+
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage{pgfplots}
+\begin{document}
+\begin{figure*}[t!]
+    \centering
+  \begin{tabular}{ccc}
+    \resizebox{.31\linewidth}{!}{\input{paper_experiments/exact_vs_inexact_prox_mlp_plot.tex}} &
+    \resizebox{.31\linewidth}{!}{\input{paper_experiments/inexact_prox_vs_sgd_mlp_plot.tex}} &
+    \resizebox{.31\linewidth}{!}{\input{paper_experiments/exact_vs_inexact_prox_mlp_plot_val_acc.tex}}
+  \end{tabular}
+  \caption{Exact and inexact solvers for ProxProp compared with BackProp for an MLP on CIFAR-10.}
+\end{figure*}
+
+\begin{figure*}[t!]
+    \centering
+  \begin{tabular}{cc}
+    \resizebox{.47\linewidth}{!}{\input{paper_experiments/proxprop_vs_sgd_adam_convnet_epochs_plot.tex}} &
+    \resizebox{.47\linewidth}{!}{\input{paper_experiments/proxprop_vs_sgd_adam_convnet_time_plot.tex}} \\
+    \resizebox{.47\linewidth}{!}{\input{paper_experiments/proxprop_vs_sgd_adam_convnet_epochs_plot_val.tex}} &
+    \resizebox{.47\linewidth}{!}{\input{paper_experiments/proxprop_vs_sgd_adam_convnet_time_plot_val.tex}} \\
+  \end{tabular}
+  \caption{ProxProp as a first-order oracle in combination with the Adam optimizer for a convolutional neural network on CIFAR-10.}
+\end{figure*}
+\end{document}

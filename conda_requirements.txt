@@ -1,0 +1,7 @@
+matplotlib
+numpy
+pyyaml
+mkl
+setuptools
+cmake
+cffi
