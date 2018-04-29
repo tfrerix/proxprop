@@ -12,7 +12,6 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.utils.data as data
 import torch.nn.functional as F
-from torch.autograd import Variable
 from util import load_dataset, train, compute_loss_and_accuracy
 from models import ProxPropMLP, ProxPropConvNet
 
@@ -69,8 +68,7 @@ print('x_test dims: ' + str(x_test.shape))
 print('Maximum value of training set: ' + str(np.max(x_train)))
 print('Minimum value of training set: ' + str(np.min(x_train)))
 
-if params['use_cuda']:
-    torch.cuda.set_device(params['cuda_device'])
+device = torch.device('cuda' if params['use_cuda'] else 'cpu')
 
 print('Training parameters:')
 for k,v in params.items():
@@ -78,14 +76,12 @@ for k,v in params.items():
 
 input_size = x_train.shape[1:]
 if params['model'] == 'MLP':
-    model = ProxPropMLP(input_size, hidden_sizes=[4000, 1000, 4000], num_classes=10, tau_prox=params['tau_prox'], optimization_mode=params['optimization_mode'])
+    model = ProxPropMLP(input_size, hidden_sizes=[4000, 1000, 4000], num_classes=10, tau_prox=params['tau_prox'], optimization_mode=params['optimization_mode']).to(device)
 elif params['model'] == 'ConvNet':
-    model = ProxPropConvNet(input_size, 10, params['tau_prox'], optimization_mode=params['optimization_mode'])
+    model = ProxPropConvNet(input_size, 10, params['tau_prox'], optimization_mode=params['optimization_mode']).to(device)
 else:
     raise ValueError('The model {} you have provided is not valid.'.format(params['model']))
     
-if params['use_cuda']:
-    model = model.cuda()
 print('model: \n' + str(model))
 
 loss_fn = torch.nn.CrossEntropyLoss()
@@ -97,7 +93,7 @@ else:
     raise ValueError('The optimizer {} you have provided is not valid.'.format(params['optimizer']))
 
 data = x_train, y_train, x_val, y_val, x_test, y_test
-training_metrics = train(model, loss_fn, optimizer, data, params['num_epochs'], params['batch_size'], cuda=params['use_cuda'])
+training_metrics = train(model, loss_fn, optimizer, data, params['num_epochs'], params['batch_size'], device=device)
 
 if params['outfile'] != '':
     pickle_data = {}

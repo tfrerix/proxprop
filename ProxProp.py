@@ -4,7 +4,6 @@ import torch
 from torch.autograd import Function
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
 from functools import partial
 import numpy
 
@@ -63,12 +62,11 @@ def optimization_step(A, Y, Z, beta, apply_cg, mode='prox_cg1'):
 
     The method argument 'apply_cg' is the one taken from the respective ProxProp module.
     """
-    dtype= type(A)
     apply_A = partial(apply_cg, A)
 
     if mode == 'prox_exact':
         AA = A.t().mm(A)
-        I = torch.eye(A.size(1)).type(dtype)
+        I = torch.eye(A.size(1)).type_as(A)
         A_tilde = AA + beta * I
         b_tilde = A.t().mm(Y) + beta*Z
         X, _ = torch.gesv(b_tilde, A_tilde)
@@ -92,7 +90,7 @@ class ForwardBackwardFunctional(Function):
     @staticmethod
     def forward(ctx, *args):
         ctx.optimization_layer = args[-1]
-        output = ctx.optimization_layer.apply_forward(args[0]).data
+        output = ctx.optimization_layer.apply_forward(args[0])
         ctx.save_for_backward(*args[:-1], output)
         return output
 
@@ -110,12 +108,11 @@ class ForwardBackwardFunctional(Function):
 
         # prox step or gradient step on the network parameters
         if layer.optimization_mode == 'prox_exact':
-            params_data = [p.data for p in params]
-            A, Y, Z = layer.to_exact_solve_shape(input.data, z_updated.data, *params_data)
+            A, Y, Z = layer.to_exact_solve_shape(input, z_updated, *params)
         else:
-            A = input.data
-            Y = z_updated.data
-            Z = layer.to_cg_shape(params).data
+            A = input.detach()
+            Y = z_updated.detach()
+            Z = layer.to_cg_shape(params).detach()
 
         X_tensor = optimization_step(A, Y, Z, 1./layer.tau_prox, layer.apply_cg, mode=layer.optimization_mode)
 
@@ -128,10 +125,10 @@ class ForwardBackwardFunctional(Function):
         grad_params = [x[0] - x[1] for x in zip(params,params_udpated)]
 
         # explicit gradient step on a
-        input_temp = Variable(input.data, requires_grad=True)
+        input.requires_grad_()
         with torch.enable_grad():
-            out_temp = ctx.optimization_layer.apply_forward(input_temp)
-            grad_temp = torch.autograd.grad(out_temp, input_temp, grad_z)
+            out_temp = ctx.optimization_layer.apply_forward(input)
+            grad_temp = torch.autograd.grad(out_temp, input, grad_z)
         grad_input = grad_temp[0]
         return tuple([grad_input] + grad_params + [None])
 
@@ -171,12 +168,12 @@ def proxprop_module_generator(BaseModule, to_cg_shape=None, from_cg_shape=None, 
             assert len(d1.items()) == len(d2.items())
             for name, p1 in d1.items():
                 p2 = d2[name]
-                p1_np = p1.data.cpu().numpy() if type(p1.data) == 'torch.cuda.FloatTensor' else p1.data.numpy()
-                p2_np = p2.data.cpu().numpy() if type(p2.data) == 'torch.cuda.FloatTensor' else p2.data.numpy()
+                p1_np = p1.detach().cpu().numpy()
+                p2_np = p2.detach().cpu().numpy()
                 assert numpy.allclose(p1_np, p2_np)
 
         def _test_cg_reshaping(self):
-            named_params_check = self.from_cg_shape(self.to_cg_shape([p.data for p in self.parameters()]))
+            named_params_check = self.from_cg_shape(self.to_cg_shape([p for p in self.parameters()]))
             module_named_params = dict(self.named_parameters())
             self._compare_two_params_dicts(module_named_params, named_params_check)
 
@@ -188,7 +185,7 @@ def proxprop_module_generator(BaseModule, to_cg_shape=None, from_cg_shape=None, 
             try:
                 y = self.apply_forward(x)
                 params = list(self.parameters())
-                A, Y, Z = self.to_exact_solve_shape(x.data, y.data, *[p.data for p in params])
+                A, Y, Z = self.to_exact_solve_shape(x, y, *params)
                 named_params_check = self.from_exact_solve_shape(Z)
                 module_named_params = dict(self.named_parameters())
                 self._compare_two_params_dicts(module_named_params, named_params_check)
@@ -267,33 +264,30 @@ def proxprop_module_generator(BaseModule, to_cg_shape=None, from_cg_shape=None, 
             if mode == 1:
                 params_backup = self._parameters
                 self._parameters = self.from_cg_shape(x)
-                A_var = Variable(A, requires_grad=False)
                 with torch.enable_grad():
-                    output = self.apply_forward(A_var).data
+                    output = self.apply_forward(A)
                 self._parameters = params_backup
                 return output
 
             elif mode == 2:
-                A_var = Variable(A, requires_grad=False)
                 self.zero_grad()
                 with torch.enable_grad():
-                    self.apply_adjoint(self.apply_forward(A_var), Variable(x, requires_grad=False))
+                    self.apply_adjoint(self.apply_forward(A), x)
                 result = self.to_cg_shape([p.grad for p in self.parameters()])
                 self.zero_grad()
-                return result.data
+                return result
 
             elif mode == 3:
                 params_backup = self._parameters
                 self._parameters = self.from_cg_shape(x)
-                A_var = Variable(A)
                 self.zero_grad()
                 with torch.enable_grad():
-                    forward_out = self.apply_forward(A_var)
+                    forward_out = self.apply_forward(A.requires_grad_())
                     self.apply_adjoint(forward_out, forward_out)
                 result = self.to_cg_shape([p.grad for p in self.parameters()])
                 self.zero_grad()
                 self._parameters = params_backup
-                return result.data
+                return result
 
             else:
                 raise ValueError('Mode {} is not valid. Provide 1 for Ax and 2 for A^Tx.'.format(mode))

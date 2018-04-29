@@ -1,35 +1,30 @@
 Proximal Backpropagation
 ================
 Proximal Backpropagation (ProxProp) is a neural network training algorithm that takes *implicit* instead of *explicit* gradient steps to update the network parameters.
-We have analyzed this algorithm in our paper, which we will present at ICLR 2018:
+We have analyzed this algorithm in our ICLR 2018 paper:
 
 **Proximal Backpropagation** (Thomas Frerix, Thomas Möllenhoff, Michael Moeller, Daniel Cremers; ICLR 2018) [https://arxiv.org/abs/1706.04638]
 
 tl;dr
 -------------------
-- We provide a PyTorch implementation of ProxProp for Python 3.
+- We provide a PyTorch implementation of ProxProp for Python 3 and PyTorch 0.4.0.
 - The results of our paper can be reproduced by executing the script `paper_experiments.sh`.
 - ProxProp is implemented as a `torch.nn.Module` (a 'layer') and can be combined with any other layer and first-order optimizer.
 While a ProxPropConv2d and a ProxPropLinear layer already exist, you can generate a ProxProp layer for your favorite linear layer with one line of code.
 
 Installation
 -------------------
-1. Make sure you have a running Python 3 (>=3.5) ecosytem. 
-We have tested our implementation with Python 3.5. We recommend that you use a [conda](https://conda.io/docs/) install, as this is also the recommended option to get the latest PyTorch running. 
+1. Make sure you have a running Python 3 (>=3.5) ecosytem. We recommend that you use a [conda](https://conda.io/docs/) install, as this is also the recommended option to get the latest PyTorch running. 
 For this README and for the scripts, we assume that you have `conda` running with Python 3.5.
 2. Clone this repository and switch to the directory.
 3. Install the dependencies via `conda install --file conda_requirements.txt` and `pip install -r pip_requirements.txt`.
-4. Install [PyTorch](http://pytorch.org/). We recommend that you install a recent project state from the [github repository](https://github.com/pytorch/pytorch) using `conda` as detailed [here](https://github.com/pytorch/pytorch#from-source). 
-    We have tested our code with commit `8f1f84a6f2fa6c73a4e8d4751d5d231dd80105b2` from February 9, 2018.
-    To this end, make sure you have a working Cuda environment. 
-    We have tested an install with CUDA 9.0.
-    Assert that the following environment variables are set:
+4. Install [PyTorch](http://pytorch.org/) with magma support. 
+    We have tested our code with PyTorch 0.4.0 and CUDA 9.0.
+    You can install this setup via
     ```
-    export CUDA_HOME=/your/path/to/cuda-9.0
-    export CUDNN_LIB_DIR=/your/path/to/cudnn/lib64
-    export CUDNN_INCLUDE_DIR=/your/path/to/cudnn/include
+    conda install -c pytorch magma-cuda90
+    conda install pytorch cuda90 -c pytorch
     ```
-    Also make sure to install with magma support, as detailed [here](https://github.com/pytorch/pytorch#install-optional-dependencies), since this will be needed to solve linear systems on the GPU.
 5. (optional, but necessary to reproduce paper experiments) Download the CIFAR-10 dataset by executing `get_data.sh`
 
 Training neural networks with ProxProp
