@@ -7,23 +7,23 @@ We have analyzed this algorithm in our ICLR 2018 paper:
 
 tl;dr
 -------------------
-- We provide a PyTorch implementation of ProxProp for Python 3 and PyTorch 0.4.0.
+- We provide a PyTorch implementation of ProxProp for Python 3 and PyTorch 1.0.1.
 - The results of our paper can be reproduced by executing the script `paper_experiments.sh`.
 - ProxProp is implemented as a `torch.nn.Module` (a 'layer') and can be combined with any other layer and first-order optimizer.
 While a ProxPropConv2d and a ProxPropLinear layer already exist, you can generate a ProxProp layer for your favorite linear layer with one line of code.
 
 Installation
 -------------------
-1. Make sure you have a running Python 3 (>=3.5) ecosytem. We recommend that you use a [conda](https://conda.io/docs/) install, as this is also the recommended option to get the latest PyTorch running. 
-For this README and for the scripts, we assume that you have `conda` running with Python 3.5.
+1. Make sure you have a running Python 3 (tested with Python 3.7) ecosytem. We recommend that you use a [conda](https://conda.io/docs/) install, as this is also the recommended option to get the latest PyTorch running. 
+For this README and for the scripts, we assume that you have `conda` running with Python 3.7.
 2. Clone this repository and switch to the directory.
 3. Install the dependencies via `conda install --file conda_requirements.txt` and `pip install -r pip_requirements.txt`.
 4. Install [PyTorch](http://pytorch.org/) with magma support. 
-    We have tested our code with PyTorch 0.4.0 and CUDA 9.0.
+    We have tested our code with PyTorch 1.0.1 and CUDA 10.0.
     You can install this setup via
     ```
-    conda install -c pytorch magma-cuda90
-    conda install pytorch cuda90 -c pytorch
+    conda install -c pytorch magma-cuda100
+    conda install pytorch torchvision cudatoolkit=10.0 -c pytorch
     ```
 5. (optional, but necessary to reproduce paper experiments) Download the CIFAR-10 dataset by executing `get_data.sh`
 

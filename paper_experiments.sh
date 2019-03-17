@@ -6,11 +6,11 @@ set -e
 current_date_time=`date "+%Y-%m-%d %H:%M:%S"`
 echo "Reproducing experiments of the paper Proximal Backpropagation at $current_date_time"
 echo "Checking your python version..."
-ret=`python -c 'import sys; print(sys.version_info >= (3,5))'`
+ret=`python -c 'import sys; print(sys.version_info >= (3,7))'`
 if [ $ret ]; then
-    echo "Python version is >= 3.5"
+    echo "Python version is >= 3.7"
 else 
-    echo "We require python version >= 3.5. Note we assume that python3 is aliased by python."
+    echo "We require python version >= 3.7. Note we assume that python3 is aliased by python."
 fi
 
 echo "Checking your pdflatex installation..."
